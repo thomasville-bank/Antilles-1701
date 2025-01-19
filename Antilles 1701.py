@@ -65,6 +65,7 @@ def randomize_position():
     
 island_rows = []
 island_columns = []
+
 wn.addshape("palm island.gif")
 island1 = trtl.Turtle(shape="palm island.gif")
 randomize_position()
@@ -89,6 +90,11 @@ for island in range((int(grid_side * grid_side * 0.13)) - 1):
 player_one_score = 0
 player_two_score = 0
 player_three_score = 0
+
+#creates a list of island claims
+island_claims = []
+for island in range(len(island_columns)):
+    island_claims.append("unclaimed")
 
 #determine row and column based on mouse location
 def grid_clicked(x, y):
@@ -115,7 +121,7 @@ playerOnename=wn.textinput("Enter Name", "Ahoy, Player One, what be your name on
 playerTwoname=wn.textinput("Enter Name", "Ahoy, Player Two, what be your name on the high seas?")
 playerThreename=wn.textinput("Enter Name", "Ahoy, Player Three, what be your name on the high seas?")
 
-player = [playerOnename,playerTwoname,playerThreename] 
+player = [playerOnename,playerTwoname,playerThreename]
 ship = [playerOneship, playerTwoship, playerThreeship]
 ship_column = [6, 7, 8]
 ship_row = [9, 9, 9]
@@ -127,13 +133,16 @@ playerOneship.goto((ship_column[0] * SQUARE_SIZE - 360), (ship_row[0] * SQUARE_S
 playerTwoship.goto((ship_column[1] * SQUARE_SIZE - 360), (ship_row[1] * SQUARE_SIZE - 360))
 playerThreeship.goto((ship_column[2] * SQUARE_SIZE - 360), (ship_row[2] * SQUARE_SIZE - 360))
 
+
 # assign the treasure to a random island
 treasure_island = rand.randint(0,((int(grid_side * grid_side * 0.13))) - 1)
 
-# this starts thegame on turn one
+# this starts the game on turn one
 
 turn_index = 0
-
+player_one_score=0
+player_two_score=0
+player_three_score=0
 #this chooses the active ship based on what turn it is. I.e. if it is turn one, the first ship will be active
 
 
@@ -151,6 +160,37 @@ def move():
     def get_directions():
         global direction
         direction = wn.textinput(player[turn_index],'Which direction would you like to move? (up, down, left, right)')
+
+    # draw a flag on claimed islands
+
+    def plant_flag():
+        painter.goto((ship_column[turn_index] * SQUARE_SIZE - 340), (ship_row[turn_index] * SQUARE_SIZE - 380))
+        painter.setheading(90)
+        painter.pencolor("black")
+        painter.pendown()
+        painter.forward(20)
+
+        if turn_index == 0:
+            painter.pencolor("red")
+            painter.fillcolor("red")
+        elif turn_index == 1:
+            painter.pencolor("green")
+            painter.fillcolor("green")
+        elif turn_index == 2:
+            painter.pencolor("yellow")
+            painter.fillcolor("yellow")
+
+        painter.begin_fill()
+        painter.forward(10)
+        painter.right(90)
+        painter.forward(15)
+        painter.right(90)
+        painter.forward(10)
+        painter.right(90)
+        painter.forward(15)
+        painter.end_fill()
+        painter.penup()
+        painter.pencolor("black")
 
     get_directions()
     if direction == "up":
@@ -177,59 +217,71 @@ def move():
     x = ship_column[turn_index] * SQUARE_SIZE - 360
     y = ship_row[turn_index] * SQUARE_SIZE - 360
 
-    currentShip.goto(x, y)
+    currentShip.goto(x,y)
+
+    global player_one_score
+    global player_two_score
+    global player_three_score
+    global island_columns
+    global island_rows
+    global treasure
+    global treasure_island
+
+    land_ho = 0
+    while land_ho < 13:
+        if island_columns[land_ho] == ship_column[turn_index]:
+            if island_rows[land_ho] == ship_row[turn_index]:
+                if island_claims[land_ho] == "unclaimed":
+                    if turn_index == 0:
+                        player_one_score += 1
+                        plant_flag()
+                        island_claims[land_ho] = 0
+                    elif turn_index == 1:
+                        player_two_score += 1
+                        plant_flag()
+                        island_claims[land_ho] = 1
+                    elif turn_index == 2:
+                        player_three_score += 1
+                        plant_flag()
+                        island_claims[land_ho] = 2
+        if ship_column[turn_index] == island_columns[treasure_island]:
+            if ship_row[turn_index] == island_rows[treasure_island]:
+                treasure = player[turn_index]
+                if turn_index == 0:
+                    player_one_score += 3
+                elif turn_index == 1:
+                    player_two_score += 3
+                elif turn_index == 2:
+                    player_three_score += 3
+        
+        land_ho += 1
 
     turn_index = (turn_index + 1) % len(ship)
 
 while treasure == False:
     move()
-    
-
-#   update score for finding islands
-if (abs(ship.xcor - (island_columns * SQUARE_SIZE - 360) == 0)):
-    if (abs(ship.ycor - (island_rows * SQUARE_SIZE - 360) == 0)):
-        
-        if turn_index == 0:
-            player_one_score += 1
-        elif turn_index == 1:
-            player_two_score += 1
-        elif turn_index == 2:
-            player_three_score += 1
-
-# draw a flag on claimed islands
-ship_column = 0
-ship_row = 0
-
-painter.goto((ship_column * SQUARE_SIZE - 360), (ship_row * SQUARE_SIZE - 380))
-painter.setheading(90)
-painter.pencolor("black")
-painter.forward(20)
-
-if turn_index == 0:
-    painter.pencolor("red")
-    painter.fillcolor("red")
-elif turn_index == 1:
-    painter.pencolor("green")
-    painter.fillcolor("green")
-elif turn_index == 2:
-    painter.pencolor("yellow")
-    painter.fillcolor("yellow")
-
-painter.begin_fill()
-painter.forward(10)
-painter.right(90)
-painter.forward(15)
-painter.right(90)
-painter.forward(10)
-painter.right(90)
-painter.forward(15)
-painter.end_fill()
-
-
 
 # create a leaderboard
-# def leaderboard():
-    
+painter.color("moccasin")
+painter.goto(-400, -400)
+rect(800, 800)
 
+painter.goto(-350, 300)
+painter.pendown
+painter.color("black")
+treasure_finder = treasure, "found the treasure"
+painter.write(" ".join(treasure_finder), font=('Zapfino',20))
+painter.goto(-350, 200)
+player_one_final = str(player_one_score)
+player_one = player[0], player_one_final
+painter.write(": ".join(player_one), font=('Zapfino',20))
+painter.goto(-350, 100)
+player_two_final = str(player_two_score)
+player_two = player[1], player_two_final
+painter.write(": ".join(player_two), font=('Zapfino',20))
+painter.goto(-350, 0)
+player_three_final = str(player_three_score)
+player_three = player[0], player_three_final
+painter.write(": ".join(player_three), font=('Zapfino',20))
 
 wn.mainloop()
