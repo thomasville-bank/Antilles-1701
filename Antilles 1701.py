@@ -2,12 +2,14 @@
 
 import turtle as trtl
 import random as rand
+from turtle import *
 
 painter = trtl.Turtle()
 painter.hideturtle()
 
 wn = trtl.Screen()
 wn.setup(width = 800, height = 800)
+wn.title("Antilles 1701")
 wn.bgcolor("moccasin")
 
 #creates a function to create a rectangle with width w and height h
@@ -31,9 +33,10 @@ painter.penup()
 painter.goto(-250,50)
 painter.pendown
 
+#title screen
 painter.write('Antilles 1701:', font=('Zapfino',40))
-
 painter.write('\n\n\n\n\nA Les Incompetents Production', font=('Zapfino',0))
+
 #creates a grid with grid_side rows and columns
 square = 0
 square_x = -400
@@ -67,7 +70,16 @@ island_rows = []
 island_columns = []
 
 wn.addshape("palm island.gif")
-island1 = trtl.Turtle(shape="palm island.gif")
+wn.addshape("inverted_palm_island.gif")
+
+#randomly alternate between two types of palm islands
+island_shape_num = rand.randint(1, 2)
+if island_shape_num == 1:
+    island_shape = "palm island.gif"
+elif island_shape_num == 2:
+    island_shape = "inverted_palm_island.gif"
+
+island1 = trtl.Turtle(shape=island_shape)
 randomize_position()
 island1.penup()
 island1.speed(0)
@@ -75,10 +87,25 @@ island_rows.append(island_row)
 island_columns.append(island_column)
 island1.goto((island_column * SQUARE_SIZE - 360), (island_row * SQUARE_SIZE - 360))
 
+def check():
+    island_collision = 0
+    while island_collision < (len(island_rows)):
+        if island_column == island_columns[island_collision]:
+                if island_row == island_rows[island_collision]:
+                    randomize_position()
+                    check()
+        island_collision += 1
+
 for island in range((int(grid_side * grid_side * 0.13)) - 1):
-    island = trtl.Turtle(shape="palm island.gif")
-    min_spaces = 0
+    island_shape_num = rand.randint(1, 2)
+    if island_shape_num == 1:
+        island_shape = "palm island.gif"
+    elif island_shape_num == 2:
+        island_shape = "inverted_palm_island.gif"
+
+    island = trtl.Turtle(shape=island_shape)
     randomize_position()
+    check()
     island.penup()
     island.speed(0)
     island_rows.append(island_row)
@@ -102,8 +129,6 @@ def grid_clicked(x, y):
     row = int((y + 400) / 80)
     print("You are in row", row, "and column", column)
 
-wn.onclick(grid_clicked)
-
 # establishes three ships as movable entities
 
 base_Move = 1
@@ -123,15 +148,62 @@ playerThreename=wn.textinput("Enter Name", "Ahoy, Player Three, what be your nam
 
 player = [playerOnename,playerTwoname,playerThreename]
 ship = [playerOneship, playerTwoship, playerThreeship]
-ship_column = [6, 7, 8]
-ship_row = [9, 9, 9]
+ship_columns = []
+ship_rows = []
+
+#randomize ship locations
+def randomize_ships():
+    global ship_row
+    global ship_column
+    ship_row = rand.randint(0, 9)
+    ship_column = rand.randint(0, 9)
+
+def island_check():
+    island_collision = 0
+    while island_collision < (len(island_rows)):
+        if ship_column == island_columns[island_collision]:
+                if ship_row == island_rows[island_collision]:
+                    randomize_ships()
+                    island_check()
+        island_collision += 1
+
+randomize_ships()
+island_check()
+
+ship_rows.append(ship_row)
+ship_columns.append(ship_column)
+
+def island_ship_check():
+    island_collision = 0
+    while island_collision < (len(island_rows)):
+        if ship_column == island_columns[island_collision]:
+                if ship_row == island_rows[island_collision]:
+                    randomize_ships()
+                    island_ship_check()
+        island_collision += 1
+
+    ship_collision = 0
+    while ship_collision < (len(ship_rows)):
+        if ship_column == ship_columns[ship_collision]:
+            if ship_row == ship_rows[ship_collision]:
+                randomize_ships()
+                island_ship_check()
+        ship_collision += 1
+            
+
+for other_ship in range(2):
+    randomize_ships()
+    island_ship_check()
+
+    ship_rows.append(ship_row)
+    ship_columns.append(ship_column)
 
 playerOneship.penup()
 playerTwoship.penup()
 playerThreeship.penup()
-playerOneship.goto((ship_column[0] * SQUARE_SIZE - 360), (ship_row[0] * SQUARE_SIZE - 360))
-playerTwoship.goto((ship_column[1] * SQUARE_SIZE - 360), (ship_row[1] * SQUARE_SIZE - 360))
-playerThreeship.goto((ship_column[2] * SQUARE_SIZE - 360), (ship_row[2] * SQUARE_SIZE - 360))
+playerOneship.goto((ship_columns[0] * SQUARE_SIZE - 360), (ship_rows[0] * SQUARE_SIZE - 360))
+playerTwoship.goto((ship_columns[1] * SQUARE_SIZE - 360), (ship_rows[1] * SQUARE_SIZE - 360))
+playerThreeship.goto((ship_columns[2] * SQUARE_SIZE - 360), (ship_rows[2] * SQUARE_SIZE - 360))
 
 
 # assign the treasure to a random island
@@ -140,31 +212,65 @@ treasure_island = rand.randint(0,((int(grid_side * grid_side * 0.13))) - 1)
 # this starts the game on turn one
 
 turn_index = 0
-player_one_score=0
-player_two_score=0
-player_three_score=0
-#this chooses the active ship based on what turn it is. I.e. if it is turn one, the first ship will be active
-
-
-
+player_one_score = 0
+player_two_score = 0
+player_three_score = 0
 
 # move function which asks for direction, then changes the ship's current x,y to the new coordinates, then resets the turn counter 
-
 treasure = False
 def move():
     global turn_index
     currentShip = ship[turn_index]
-    x = ship_column[turn_index] * SQUARE_SIZE - 360
-    y = ship_row[turn_index] * SQUARE_SIZE - 360
+    x = ship_columns[turn_index] * SQUARE_SIZE - 360
+    y = ship_rows[turn_index] * SQUARE_SIZE - 360
 
     def get_directions():
         global direction
         direction = wn.textinput(player[turn_index],'Which direction would you like to move? (up, down, left, right)')
 
-    # draw a flag on claimed islands
+    get_directions()
+    if direction == "up":
+        if ship_rows[turn_index] != 9:
+            ship_rows[turn_index] += 1
+        else:
+                get_directions()
+    elif direction == "down":
+        if ship_rows[turn_index] != 0:
+            ship_rows[turn_index] -= 1
+        else:
+                get_directions()
+    elif direction == "left":
+        if ship_columns[turn_index] != 0:
+            ship_columns[turn_index] -= 1
+        else:
+                get_directions()
+    elif direction == "right":
+        if ship_columns[turn_index] != 9:
+            ship_columns[turn_index] += 1
+        else:
+                get_directions()
+    
+    # def up():
+    #     print("up!")
+    
+    # onkey(up, "Up")
+    
+    x = ship_columns[turn_index] * SQUARE_SIZE - 360
+    y = ship_rows[turn_index] * SQUARE_SIZE - 360
 
+    currentShip.goto(x,y)
+
+    global player_one_score
+    global player_two_score
+    global player_three_score
+    global island_columns
+    global island_rows
+    global treasure
+    global treasure_island
+
+# creates a function to draw a flag on claimed islands
     def plant_flag():
-        painter.goto((ship_column[turn_index] * SQUARE_SIZE - 340), (ship_row[turn_index] * SQUARE_SIZE - 380))
+        painter.goto((ship_columns[turn_index] * SQUARE_SIZE - 340), (ship_rows[turn_index] * SQUARE_SIZE - 380))
         painter.setheading(90)
         painter.pencolor("black")
         painter.pendown()
@@ -192,45 +298,10 @@ def move():
         painter.penup()
         painter.pencolor("black")
 
-    get_directions()
-    if direction == "up":
-        if ship_row[turn_index] != 9:
-            ship_row[turn_index] += 1
-        else:
-                get_directions()
-    elif direction == "down":
-        if ship_row[turn_index] != 0:
-            ship_row[turn_index] -= 1
-        else:
-                get_directions()
-    elif direction == "left":
-        if ship_column[turn_index] != 0:
-            ship_column[turn_index] -= 1
-        else:
-                get_directions()
-    elif direction == "right":
-        if ship_column[turn_index] != 9:
-            ship_column[turn_index] += 1
-        else:
-                get_directions()
-    
-    x = ship_column[turn_index] * SQUARE_SIZE - 360
-    y = ship_row[turn_index] * SQUARE_SIZE - 360
-
-    currentShip.goto(x,y)
-
-    global player_one_score
-    global player_two_score
-    global player_three_score
-    global island_columns
-    global island_rows
-    global treasure
-    global treasure_island
-
     land_ho = 0
-    while land_ho < 13:
-        if island_columns[land_ho] == ship_column[turn_index]:
-            if island_rows[land_ho] == ship_row[turn_index]:
+    while land_ho < (int(grid_side * grid_side * 0.13)):
+        if island_columns[land_ho] == ship_columns[turn_index]:
+            if island_rows[land_ho] == ship_rows[turn_index]:
                 if island_claims[land_ho] == "unclaimed":
                     if turn_index == 0:
                         player_one_score += 1
@@ -244,16 +315,18 @@ def move():
                         player_three_score += 1
                         plant_flag()
                         island_claims[land_ho] = 2
-        if ship_column[turn_index] == island_columns[treasure_island]:
-            if ship_row[turn_index] == island_rows[treasure_island]:
-                treasure = player[turn_index]
-                if turn_index == 0:
-                    player_one_score += 3
-                elif turn_index == 1:
-                    player_two_score += 3
-                elif turn_index == 2:
-                    player_three_score += 3
-        
+                    print(player_one_score, player_two_score,player_three_score)
+                    if ship_columns[turn_index] == island_columns[treasure_island]:
+                        if ship_rows[turn_index] == island_rows[treasure_island]:
+                            treasure = player[turn_index]
+                            if turn_index == 0:
+                                player_one_score += 3
+                            elif turn_index == 1:
+                                player_two_score += 3
+                            elif turn_index == 2:
+                                player_three_score += 3
+                            print(player_one_score, player_two_score,player_three_score)
+
         land_ho += 1
 
     turn_index = (turn_index + 1) % len(ship)
@@ -281,7 +354,8 @@ player_two = player[1], player_two_final
 painter.write(": ".join(player_two), font=('Zapfino',20))
 painter.goto(-350, 0)
 player_three_final = str(player_three_score)
-player_three = player[0], player_three_final
+player_three = player[2], player_three_final
 painter.write(": ".join(player_three), font=('Zapfino',20))
 
+listen()
 wn.mainloop()
